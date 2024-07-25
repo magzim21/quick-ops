@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# Ensure the script is called with two arguments
+if [ "$#" -ne 2 ]; then
+  echo "Usage: $0 <environment> <region>"
+  exit 1
+fi
+
+ENVIRONMENT=$1
+REGION=$2
+
+# Define the colors based on the Dracula color scheme
+DEV_COLOR="#072e00"      # Green
+STG_COLOR="#402900"      # Yellow
+PROD_COLOR="#380000"     # Dark Red
+
+# Determine the background color based on the environment
+case "$ENVIRONMENT" in
+  "dev")
+    BG_COLOR="$DEV_COLOR"
+    ;;
+  "stg")
+    BG_COLOR="$STG_COLOR"
+    ;;
+  "prod")
+    BG_COLOR="$PROD_COLOR"
+    ;;
+  *)
+    echo "Unknown ENVIRONMENT: $ENVIRONMENT"
+    exit 1
+    ;;
+esac
+
+# Apply the background color for the current session in iTerm2
+if [ -n "$BG_COLOR" ]; then
+  COLOR=${BG_COLOR#\#}
+  echo -e "\033]1337;SetColors=bg=${COLOR}\a"
+fi
+
+# Set iTerm2 session badge only if environment is PROD
+if [ "$ENVIRONMENT" = "prod" ]; then
+  BADGE=$(echo -n "${ENVIRONMENT}" | base64)
+  echo -e "\033]1337;SetBadgeFormat=${BADGE}\a"
+  echo "Badge set to $ENVIRONMENT"
+else
+  echo -e "\033]1337;SetBadgeFormat=\a"
+fi
+
+# Set iTerm2 session name
+echo -e "\033]1;${ENVIRONMENT} ${REGION}\a"
+echo "Updated iTerm2 Session name to '${ENVIRONMENT} ${REGION}'"
+
+# Export AWS profile and region
+export ENVIRONMENT="${ENVIRONMENT}"
+export AWS_PROFILE="your-org-${ENVIRONMENT}"
+export AWS_REGION="$REGION"
+export TF_DATA_DIR=".terraform_${ENVIRONMENT}_${REGION}"
+echo "Updated env var ENVIRONMENT=$ENVIRONMENT"
+echo "Updated env var AWS_PROFILE=$AWS_PROFILE"
+echo "Updated env var AWS_REGION=$AWS_REGION"
+echo "Updated env var TF_DATA_DIR=$TF_DATA_DIR"
+
+# Set kubectl context assuming there is one cluster per environment and region
+if kubectl config use-context "your-org-${ENVIRONMENT}-${REGION}"; then
+  echo "Kubectl context set to your-org-${ENVIRONMENT}-${REGION}"
+else
+  echo "your-org-${ENVIRONMENT}-${REGION} context not found"
+fi
