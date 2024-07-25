@@ -1,5 +1,5 @@
 # safe-ops
-
+Motivation: https://medium.com/@maximonyshchenko/how-not-accidentally-wipe-out-prod-6249f0e2aa5b
 
 ## Installation
 Add `./safe-ops` to your PATH  
