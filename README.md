@@ -1,6 +1,6 @@
 ## Usage
-https://youtu.be/rYSePf9fJio
-These scripts are used together where `./bc-tabs` is an entrypoint.  
+https://youtu.be/rYSePf9fJio  
+These scripts are used together where `./bc-tabs` acts as an entrypoint.  
 This allows to save time on running commands in multi-environment setup by running them simultaneously, while saves you from messing up tabs/environments (applying things to a wrong target).
 
 This feels like ansible ad-hoc commands but with enhanced user experience because you can toggle broadcast input, view fresh logs in related tabs.
