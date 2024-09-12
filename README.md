@@ -10,6 +10,9 @@ Add `./bc-tabs`, `./safe-ops`, `./update-kubeconfigs` script to your PATH.
 
 Configure environments and regions in these scrtips. There is no shared config yet.
 
+Enable iTerm2 Python API
+![iterm python api](docs/img/CleanShot-2024-09-12-at-15.10.23@2x.jpg)
+
 ## bc-tabs
 ![bc-tabs broadcast example](docs/img/CleanShot-2024-09-12-at-14.48.48@2x.jpg)
 Creates iterm2 tabs per environment and region.  
