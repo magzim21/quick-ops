@@ -2,18 +2,19 @@
 
 # Ensure the script is called with two arguments
 if [ "$#" -ne 3 ]; then
-  echo "Usage: $0 <environment> <type> <region>"
+  echo "Usage: $0 <organization> <environment> <type> <region>"
   exit 1
 fi
 
-ENVIRONMENT=$1
-TYPE=$2
-REGION=$3
+ORGANIZATION=${1:-codelawcorp} # your default organization
+ENVIRONMENT=$2
+TYPE=$3
+REGION=$4
 
 # Define the colors based on the Dracula color scheme
-DEV_COLOR="#072e00"      # Dark Green
-STG_COLOR="#402900"      # Dark Yellow
-TEST_COLOR="#1e2369"     # Dark Blue
+DEV_COLOR="#072e00"      # Green
+STG_COLOR="#402900"      # Yellow
+TEST_COLOR="#008064"      # Cyan
 PROD_COLOR="#380000"     # Dark Red
 
 # Determine the background color based on the environment
@@ -44,9 +45,9 @@ fi
 
 # Set iTerm2 session badge only if environment is PROD
 if [ "$ENVIRONMENT" = "prod" ]; then
-  BADGE=$(echo -n "${ENVIRONMENT}" | base64)
+  BADGE=$(echo -n "${REGION}" | base64)
   echo -e "\033]1337;SetBadgeFormat=${BADGE}\a"
-  echo "Badge set to $ENVIRONMENT"
+  echo "Badge set to $REGION"
 else
   echo -e "\033]1337;SetBadgeFormat=\a"
 fi
@@ -57,12 +58,17 @@ echo "Updated iTerm2 Session name to '${ENVIRONMENT} ${REGION}'"
 
 # Export AWS profile and region
 export ENVIRONMENT="${ENVIRONMENT}"
-export AWS_PROFILE="your-org-${ENVIRONMENT}"
+export AWS_PROFILE="${ORGANIZATION}-${TYPE}-${ENVIRONMENT}"
 export AWS_REGION="$REGION"
 export TF_DATA_DIR=".terraform_${ENVIRONMENT}_${REGION}"
-export KUBECONFIG="/Users/monishenko@mimecast.com/.kube/your-org-${ENVIRONMENT}-${REGION}"
 echo "Updated env var ENVIRONMENT=$ENVIRONMENT"
 echo "Updated env var AWS_PROFILE=$AWS_PROFILE"
 echo "Updated env var AWS_REGION=$AWS_REGION"
 echo "Updated env var TF_DATA_DIR=$TF_DATA_DIR"
-echo "Updated env var KUBECONFIG="~/.kube/your-org-${ENVIRONMENT}-${REGION}""
+
+# Set kubectl context assuming there is one cluster per environment and region
+if kubectl config use-context "${ORGANIZATION}-${TYPE}-${ENVIRONMENT}-${REGION}"; then
+  echo "Kubectl context set to ${ORGANIZATION}-${TYPE}-${ENVIRONMENT}-${REGION}"
+else
+  echo "${ORGANIZATION}-${TYPE}-${ENVIRONMENT}-${REGION} context not found"
+fi
