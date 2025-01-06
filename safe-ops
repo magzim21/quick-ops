@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # Ensure the script is called with two arguments
-if [ "$#" -ne 3 ]; then
+if [ "$#" -ne 4 ]; then
   echo "Usage: $0 <organization> <environment> <type> <region>"
   exit 1
 fi
 
-ORGANIZATION=${1:-codelawcorp} # your default organization
+ORGANIZATION=${1:-"codelawcorp"} # your default organization
 ENVIRONMENT=$2
 TYPE=$3
 REGION=$4
