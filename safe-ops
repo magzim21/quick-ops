@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Ensure the script is called with two arguments
-if [ "$#" -ne 4 ]; then
-  echo "Usage: $0 <organization> <layer> <environment> <region>"
+if [ "$#" -ne 5 ]; then
+  echo "Usage: $0 <organization> <layer> <environment> <region> <tf TF_directory>"
   exit 1
 fi
 
@@ -10,6 +10,7 @@ ORGANIZATION=${1:-"codelawcorp"} # your default organization
 LAYER=$2
 ENVIRONMENT=$3
 REGION=$4
+TF_DIRECTORY=${5:-$(pwd)}
 
 # Define the colors based on the Dracula color scheme
 DEV_COLOR="#072e00"      # Green
@@ -55,6 +56,10 @@ fi
 # Set iTerm2 session name
 echo -e "\033]1;${ENVIRONMENT} ${REGION}\a"
 echo "Updated iTerm2 Session name to '${ENVIRONMENT} ${REGION}'"
+
+
+cd ${TF_DIRECTORY}
+echo "Changed TF_directory to ${TF_DIRECTORY}"
 
 # Export AWS profile and region
 export ENVIRONMENT="${ENVIRONMENT}"

@@ -40,11 +40,14 @@ async def main(connection):
     panes = []
     for layer_name, layer_value in config["orgs"][args.org]["layers"].items():
         logger.debug(f"Layer: {layer_name}")
+        directory = layer_value["directory"]
         for environment_name, environment_value in layer_value["environments"].items():
             logger.debug(f"Environment: {environment_name}")
             for region in environment_value["regions"]:
                 logger.debug(f"Region: {region}")
-                panes.append(f"{args.org} {layer_name} {environment_name} {region}")
+                safe_ops_args = f"{args.org} {layer_name} {environment_name} {region} '{directory}'"
+                logger.info(f"Safe Ops Args: {safe_ops_args}")
+                panes.append(safe_ops_args)
 
     # panes = [
     #     "prod us-east-1",
@@ -67,7 +70,7 @@ async def main(connection):
             first = False
         else:
             # Split the current session into a new pane
-            session = await session.async_split_pane(vertical=True)
+            session = await session.async_split_pane(vertical=False)
             await session.async_send_text(f"source safe-ops {pane}\n")
             await session.async_send_text(f"echo 'source safe-ops {pane}'\n")
 
