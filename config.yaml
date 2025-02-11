@@ -3,13 +3,13 @@ orgs:
   codelawcorp:
     layers:
         org:
-          tf_directory: "~/Desktop/github/codelawcorp/terraform-org"
+          tf_directory: "~/Desktop/github/codelawcorp/terraform-org/terraform"
           environments:
             prod:
               regions:
                 - ca-central-1
         infra:
-          tf_directory: "~/Desktop/github/codelawcorp/terraform-infra"
+          tf_directory: "~/Desktop/github/codelawcorp/terraform-infra/terraform"
           environments:
             prod:
               regions:
@@ -21,7 +21,7 @@ orgs:
               regions:
                 - ca-central-1
         apps:
-          tf_directory: "~/Desktop/github/codelawcorp/terraform-apps"
+          tf_directory: "~/Desktop/github/codelawcorp/terraform-apps/terraform"
           environments:
             prod:
               regions:
@@ -38,13 +38,13 @@ orgs:
   iecbc-it:
     layers:
         org:
-          tf_directory: "~/Desktop/github/iecbc-it/terraform-org"
+          tf_directory: "~/Desktop/github/iecbc-it/terraform-org/terraform"
           environments:
             prod:
               regions:
                 - ca-central-1
         infra:
-          tf_directory: "~/Desktop/github/iecbc-it/terraform-infra"
+          tf_directory: "~/Desktop/github/iecbc-it/terraform-infra/terraform"
           environments:
             prod:
               regions:
@@ -56,7 +56,7 @@ orgs:
             #   regions:
             #     - ca-central-1
         apps:
-          tf_directory: "~/Desktop/github/iecbc-it/terraform-apps"
+          tf_directory: "~/Desktop/github/iecbc-it/terraform-apps/terraform"
           environments:
             prod:
               regions:
