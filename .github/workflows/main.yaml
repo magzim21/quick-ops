@@ -5,17 +5,9 @@ on:
   push:
     branches:
       - prod
-      - stg
       - dev
-  schedule: # A regular sync to prevent drifts.
-    - cron: "0 8 * * 1" # every day at 8am UTC Monday # https://crontab.guru/#0_8_*_*_*
   workflow_dispatch: {}
-env:
-  APP_NAME: ${{ vars.APP_NAME }}        # Set via GitHub Secrets and variables on a repo level
-  REF_NAME: ${{ github.ref_name }}  # This is a branch or tag name
-  # AWS_REGION: ${{ vars.AWS_REGION }} # Set via GitHub Secrets and variables on a org level
-  # AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}  # Set via GitHub Secrets and variables on a org level
-#   ROLE_ARN: ${{ secrets.ROLE_ARN }}     # Set via GitHub Secrets on a repo level
+# env:
 jobs:
   tests:
     name: Run Tests
@@ -25,26 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ vars.AWS_REGION }} # Set via GitHub Secrets and variables on an org level
-          role-to-assume: ${{ vars.AWS_ECR_ROLE_ARN }}
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-      - uses: azure/setup-helm@v4.2.0
-        with:
-          version: "latest" # default is latest (stable)
-      - name: Helm Lint
-        run: |
-          helm dependency build helm/
-          helm lint helm/ --strict
-
-      - name: Setup Node.js for commitlint
-        uses: actions/setup-node@v4
-        with:
-          node-version: "lts/*"
       - name: Check if the commit message is properly formatted
         run: |
           npm install -g @commitlint/config-conventional
@@ -53,26 +25,17 @@ jobs:
       - name: Install flake8
         run: |
           pip3 install flake8
-      - name: Run flake8
-        run: |
-          flake8 --show-source
+      # - name: Run flake8
+      #   run: |
+      #     flake8 --show-source
 
-      - name: Other tests
-        run: echo insert other tests here
-
-      # - name: Run terraform formatting
-      #   run: terraform fmt -recursive  -check
-
-  next-version:
-    name: Determine the next version
+  git-tag-release:
+    name: Create git semantic tag
     runs-on: ubuntu-latest
     needs:
       - tests
     permissions:
       contents: write # to be able to publish a GitHub release
-    outputs:
-      should-run-build: ${{ steps.decision.outputs.should-run-build }}
-      semver_tag: ${{ steps.decision.outputs.semver_tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -82,205 +45,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "lts/*"
-      - name: Decide whether to release
-        id: decision
-        # env:
-        # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # TODO / remove this
-        run: |
-          # Check if there are any changes that are relevant for the release
-          SEMVER_TAG=$(npx semantic-release --dry-run | awk '/The next release version is/ {print $NF}')
-          if [[ -n "${SEMVER_TAG}" ]]; then
-            echo "should-run-build=True" >> "$GITHUB_OUTPUT"
-            echo "semver_tag=$SEMVER_TAG" >> $GITHUB_OUTPUT
-            echo "#### Found features/fixes. The next version will be ${SEMVER_TAG}... :punch:" | tee -a $GITHUB_STEP_SUMMARY
-          else
-            echo "should-run-build=False" >> "$GITHUB_OUTPUT"
-            echo "#### No features, no fixes. Skipping Build job :police_car:" | tee -a $GITHUB_STEP_SUMMARY
-          fi
-
-  build:
-    name: Build and push Docker image to ECR
-    runs-on: ubuntu-latest
-    needs: 
-      - next-version
-    if: needs.next-version.outputs.should-run-build == 'True'
-    permissions:
-      contents: read
-      # packages: write
-      id-token: write  # This is required for requesting the JWT
-    outputs:
-      COMMIT_TAG: ${{ steps.fetch-tags.outputs.COMMIT_TAG }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Fetching Git tags
-        id: fetch-tags
-        run: |
-          git fetch --tags
-          COMMIT_TAG=$(git tag --points-at HEAD)  # Find tags associated with the current commit. Assuming there is one tag only.
-          echo $COMMIT_TAG
-          echo "COMMIT_TAG=$COMMIT_TAG" >> $GITHUB_OUTPUT
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ vars.AWS_REGION }} # Set via GitHub Secrets and variables on a org level
-          role-to-assume:  ${{ vars.AWS_ECR_ROLE_ARN }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Collect Docker Tags
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY_OWNER_AND_REPO: ${{ github.repository }}
-        run: |
-            # Initialize the tags with SHA, branch/tag name, and 'latest'
-            DOCKER_TAGS="$REGISTRY/$APP_NAME:${{ github.sha }}"
-            DOCKER_TAGS="$DOCKER_TAGS,$REGISTRY/$APP_NAME:$REF_NAME"
-            DOCKER_TAGS="$DOCKER_TAGS,$REGISTRY/$APP_NAME:latest"
-
-            SEMVER_TAG="${{ needs.next-version.outputs.semver_tag }}"
-            echo Adding "$SEMVER_TAG" Docker tag
-            DOCKER_TAGS="$DOCKER_TAGS,$REGISTRY/$APP_NAME:$SEMVER_TAG"
-
-            COMMIT_TAG="${{ steps.fetch-tags.outputs.COMMIT_TAG }}"
-            if [ -n "${COMMIT_TAG}" ]; then
-              echo Adding "$COMMIT_TAG" Docker tag
-              DOCKER_TAGS="$DOCKER_TAGS,$REGISTRY/$APP_NAME:$COMMIT_TAG"
-            fi
-
-            echo Saving Docker tags: $DOCKER_TAGS
-            echo "DOCKER_TAGS=$DOCKER_TAGS" >> $GITHUB_ENV
-
-      - name: Build and push Docker image to ECR
-        uses: docker/build-push-action@v5
-        with:
-          labels: |
-            org.opencontainers.image.source=com.employer-navigator
-            org.opencontainers.image.image.source=${{ github.repositoryUrl }}
-          provenance: true
-          platforms: linux/amd64 # linux/amd64,linux/arm64
-          # target:  ${{ github.ref_name == 'dev' && 'dev' || 'prod' }}
-          push: true
-          tags: ${{ env.DOCKER_TAGS }}
-
-  deploy:
-    name: Deploying ${{ needs.next-version.outputs.semver_tag }} to Kubernetes
-    runs-on: ubuntu-latest
-    needs:
-      - build
-      - next-version
-    env:
-      TIMEOUT: 300 # seconds
-      RETRY_LIMIT: 0
-      ARGOCD_SERVER: ${{ vars.ARGOCD_SERVER }}
-      ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
-      ARGOCD_OPTS: "--grpc-web"
-    environment: # https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment
-      name: ${{ github.ref_name }}
-      url: ${{ vars.ENV_URL }}
-    concurrency: ${{ github.ref_name }}
-    steps:
-      # - uses: actions/checkout@v4
-      - name: Install ArgoCD
-        run: |
-          VERSION=$(curl -L -s https://raw.githubusercontent.com/argoproj/argo-cd/stable/VERSION)
-          curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/download/v$VERSION/argocd-linux-amd64
-          install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
-          rm argocd-linux-amd64
-      - name: Set version ${{ needs.next-version.outputs.semver_tag }} on ArgoCD
-        id: deploy
-        # # Construction HTTPS_REPO_URL because ${{ github.repositoryUrl }} uses git:// protocol
-        run: |
-          HTTPS_REPO_URL="https://github.com/${{ github.repository }}.git" 
-          ARGOCD_APP=$(argocd app list --repo ${HTTPS_REPO_URL} --project ${{ github.ref_name }} --output name)
-          echo "ARGOCD_APP=${ARGOCD_APP}" >> $GITHUB_ENV
-
-          echo "ROLLBACK_TAG=$(argocd app get argocd/apps-${REF_NAME}-${APP_NAME} -o json | jq -r '.spec.source.helm.parameters[] | select( .name == "global.deployment.image.tag") | .value' )" >> $GITHUB_ENV
-
-          SEMVER_TAG="${{ needs.next-version.outputs.semver_tag }}"
-
-          echo "#### Setting new tag $SEMVER_TAG on $ARGOCD_APP" >> $GITHUB_STEP_SUMMARY
-          argocd app set ${ARGOCD_APP} --helm-set global.deployment.image.tag=${SEMVER_TAG}
-
-
-          AUTO_SYNC_ENABLED=$(argocd app get $ARGOCD_APP -o json | jq -r '.spec.syncPolicy.automated != null')
-          echo "AUTO_SYNC_ENABLED=$AUTO_SYNC_ENABLED" >> $GITHUB_ENV
-          if [ "$AUTO_SYNC_ENABLED" == "true" ]; then
-              echo "Auto-sync is enabled for $ARGOCD_APP. Skipping manual sync."
-          else
-              echo "Auto-sync is not enabled. Running manual sync for $ARGOCD_APP."
-              argocd app sync ${ARGOCD_APP} --timeout ${{ env.TIMEOUT }}  --retry-limit=${{ env.RETRY_LIMIT }}
-          fi
-          
-
-          
-      - name: Healthcheck
-        id: healthcheck
-        run: |
-          sleep 200
-
-          ARGOCD_APP=${{ env.ARGOCD_APP }}
-          ARGOCD_APP_STATUS=$(argocd app get $ARGOCD_APP -o json | jq -r '.status.health.status')
-          
-          HEALTHCHECK_STATUS=0; curl --fail --silent "${{ vars.ENV_URL }}" || HEALTHCHECK_STATUS=$?
-
-          if [ "$ARGOCD_APP_STATUS" != "Healthy" ] ; then
-            echo "ROLLBACK=1" >> $GITHUB_OUTPUT
-            echo "#### ArgoCD app is ${ARGOCD_APP_STATUS} ❌" | tee -a $GITHUB_STEP_SUMMARY
-            exit 1
-          elif [ $HEALTHCHECK_STATUS -ne 0 ]; then
-            echo "ROLLBACK=1" >> $GITHUB_OUTPUT
-            echo "#### Healthcheck failed ❌" | tee -a $GITHUB_STEP_SUMMARY
-            exit 1
-          else
-            echo "#### Deployment was successful ✅" | tee -a $GITHUB_STEP_SUMMARY
-          fi
-
-          
-
-      - name: Rollback on failure
-        # if: ${{ steps.healthcheck.outputs.ROLLBACK }}
-        if: failure()
-        run: |
-          HTTPS_REPO_URL="https://github.com/${{ github.repository }}.git"
-          ARGOCD_APP=${{ env.ARGOCD_APP }}
-
-          echo  "#### Deployment failed, rolling back..." >> $GITHUB_STEP_SUMMARY
-          argocd app set $ARGOCD_APP --helm-set global.deployment.image.tag=${{ env.ROLLBACK_TAG }}
-          if [ "$AUTO_SYNC_ENABLED" == "true" ]; then
-              echo "Auto-sync is enabled for $ARGOCD_APP. Skipping manual sync."
-          else
-              echo "Auto-sync is not enabled. Running manual sync for $ARGOCD_APP."
-              argocd app sync $ARGOCD_APP --timeout ${{ env.TIMEOUT }} --retry-limit=${{ env.RETRY_LIMIT }}
-          fi
-          echo Rollback completed. Exiting with error to indicate pipeline failure.
-          echo "#### Rolled back $ARGOCD_APP to ${{ env.ROLLBACK_TAG }} 🐙" | tee -a $GITHUB_STEP_SUMMARY
-
-  git-tag-release:
-    name: Create ${{ needs.next-version.outputs.semver_tag }} git tag
-    runs-on: ubuntu-latest
-    needs:
-      - deploy
-      - next-version
-    permissions:
-      contents: write # to be able to publish a GitHub release
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Setup Node.js for semantic-release
-        uses: actions/setup-node@v4
-        with:
-          node-version: "lts/*"
-      - name: Create a semanitc git tag  
+      - name: Create a semanitc git tag if needed
         # env:
         # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # TODO / remove this
         run: |
