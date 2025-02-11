@@ -1,0 +1,11 @@
+
+#!/usr/bin/env bash
+
+npx validate-branch-name -r '^(prod|stg|dev)$|^(feature|fix|hotfix)/.+$'
+
+cd $(git rev-parse --show-toplevel)
+echo "formatting Python files"
+make lint
+
+# echo "formatting tf files"
+# terraform  fmt -write=true -recursive; git add . 
