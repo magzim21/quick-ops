@@ -1,0 +1,7 @@
+branches:
+  - name: prod
+  - name: stg
+    prerelease: true
+tagFormat: "${version}" # default is v${version} 
+plugins:
+  - "@semantic-release/commit-analyzer"
