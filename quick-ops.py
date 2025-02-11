@@ -40,7 +40,7 @@ async def main(connection):
     panes = []
     for layer_name, layer_value in config["orgs"][args.org]["layers"].items():
         logger.debug(f"Layer: {layer_name}")
-        directory = layer_value["directory"]
+        directory = layer_value["tf_directory"]
         for environment_name, environment_value in layer_value["environments"].items():
             logger.debug(f"Environment: {environment_name}")
             for region in environment_value["regions"]:
