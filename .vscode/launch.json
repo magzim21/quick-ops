@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Quick-Ops",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/quick-ops.py",
+            "console": "integratedTerminal"
+        }
+    ]
+}

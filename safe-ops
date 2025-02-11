@@ -2,13 +2,13 @@
 
 # Ensure the script is called with two arguments
 if [ "$#" -ne 4 ]; then
-  echo "Usage: $0 <organization> <environment> <type> <region>"
+  echo "Usage: $0 <organization> <layer> <environment> <region>"
   exit 1
 fi
 
 ORGANIZATION=${1:-"codelawcorp"} # your default organization
-ENVIRONMENT=$2
-TYPE=$3
+LAYER=$2
+ENVIRONMENT=$3
 REGION=$4
 
 # Define the colors based on the Dracula color scheme
@@ -25,7 +25,7 @@ case "$ENVIRONMENT" in
   "stg")
     BG_COLOR="$STG_COLOR"
     ;;
-  "test")
+  "tests")
     BG_COLOR="$TEST_COLOR"
     ;;
   "prod")
@@ -58,7 +58,7 @@ echo "Updated iTerm2 Session name to '${ENVIRONMENT} ${REGION}'"
 
 # Export AWS profile and region
 export ENVIRONMENT="${ENVIRONMENT}"
-export AWS_PROFILE="${ORGANIZATION}-${TYPE}-${ENVIRONMENT}"
+export AWS_PROFILE="${ORGANIZATION}-${LAYER}-${ENVIRONMENT}"
 export AWS_REGION="$REGION"
 export TF_DATA_DIR=".terraform_${ENVIRONMENT}_${REGION}"
 echo "Updated env var ENVIRONMENT=$ENVIRONMENT"
@@ -67,8 +67,8 @@ echo "Updated env var AWS_REGION=$AWS_REGION"
 echo "Updated env var TF_DATA_DIR=$TF_DATA_DIR"
 
 # Set kubectl context assuming there is one cluster per environment and region
-if kubectl config use-context "${ORGANIZATION}-${TYPE}-${ENVIRONMENT}-${REGION}"; then
-  echo "Kubectl context set to ${ORGANIZATION}-${TYPE}-${ENVIRONMENT}-${REGION}"
+if kubectl config use-context "${ORGANIZATION}-${LAYER}-${ENVIRONMENT}-${REGION}"; then
+  echo "Kubectl context set to ${ORGANIZATION}-${LAYER}-${ENVIRONMENT}-${REGION}"
 else
-  echo "${ORGANIZATION}-${TYPE}-${ENVIRONMENT}-${REGION} context not found"
+  echo "${ORGANIZATION}-${LAYER}-${ENVIRONMENT}-${REGION} context not found"
 fi

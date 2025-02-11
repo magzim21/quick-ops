@@ -1,3 +1,4 @@
 fire==0.7.0
 PyYAML==6.0.2
 iterm2==2.9.0
+logger==1.4

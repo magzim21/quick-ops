@@ -1,0 +1,67 @@
+# default_org: codelawcorp
+orgs:
+  codelawcorp:
+    layers:
+        org:
+          environments:
+            prod:
+              regions:
+                - ca-central-1
+        infra:
+          environments:
+            prod:
+              regions:
+                - ca-central-1
+            tests:
+              regions:
+                - ca-central-1
+            dev:
+              regions:
+                - ca-central-1
+        apps:
+          environments:
+            prod:
+              regions:
+                - ca-central-1
+            tests:
+              regions:
+                - ca-central-1
+            stg:
+              regions:
+                - ca-central-1
+            dev:
+              regions:
+                - ca-central-1
+  iecbc-it:
+    layers:
+        org:
+          environments:
+            prod:
+              regions:
+                - ca-central-1
+        infra:
+          environments:
+            prod:
+              regions:
+                - ca-central-1
+            tests:
+              regions:
+                - ca-central-1
+            dev:
+              regions:
+                - ca-central-1
+        apps:
+          environments:
+            prod:
+              regions:
+                - ca-central-1
+            tests:
+              regions:
+                - ca-central-1
+            stg:
+              regions:
+                - ca-central-1
+            dev:
+              regions:
+                - ca-central-1
+
