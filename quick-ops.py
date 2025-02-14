@@ -36,6 +36,8 @@ async def main(connection):
     tab = await window.async_create_tab()
     session = tab.current_session
 
+    is_terraform_cloud = config["orgs"][args.org]["terraform_cloud"] or ""
+
     logger.debug(config["orgs"][args.org]["layers"])
     panes = []
     for layer_name, layer_value in config["orgs"][args.org]["layers"].items():
@@ -45,7 +47,7 @@ async def main(connection):
             logger.debug(f"Environment: {environment_name}")
             for region in environment_value["regions"]:
                 logger.debug(f"Region: {region}")
-                safe_ops_args = f"{args.org} {layer_name} {environment_name} {region} {directory}"
+                safe_ops_args = f"{args.org} {layer_name} {environment_name} {region} {directory} {is_terraform_cloud}"
                 logger.info(f"Safe Ops Args: {safe_ops_args}")
                 panes.append(safe_ops_args)
 

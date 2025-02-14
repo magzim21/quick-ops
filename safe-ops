@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Ensure the script is called with two arguments
-if [ "$#" -ne 5 ]; then
-  echo "Usage: $0 <organization> <layer> <environment> <region> <tf TF_directory>"
+if [ "$#" -le 5 ]; then
+  echo "Usage: $0 <organization> <layer> <environment> <region> <tf TF_directory> <is Terraform cloud>"
   exit 1
 fi
 
@@ -11,6 +11,7 @@ LAYER=$2
 ENVIRONMENT=$3
 REGION=$4
 TF_DIRECTORY=${5:-$(pwd)}
+TERRAFORM_CLOUD=${6:-"False"}
 
 # Define the colors based on the Dracula color scheme
 DEV_COLOR="#072e00"      # Green
@@ -46,9 +47,9 @@ fi
 
 # Set iTerm2 session badge only if environment is PROD
 if [ "$ENVIRONMENT" = "prod" ]; then
-  BADGE=$(echo -n "${REGION}" | base64)
+  BADGE=$(echo -n "${LAYER} ${REGION}" | base64)
   echo -e "\033]1337;SetBadgeFormat=${BADGE}\a"
-  echo "Badge set to $REGION"
+  echo "Badge set to $BADGE"
 else
   echo -e "\033]1337;SetBadgeFormat=\a"
 fi
@@ -63,13 +64,23 @@ echo "Changed TF_directory to ${TF_DIRECTORY}"
 
 # Export AWS profile and region
 export ENVIRONMENT="${ENVIRONMENT}"
-export AWS_PROFILE="${ORGANIZATION}-${LAYER}-${ENVIRONMENT}"
-export AWS_REGION="$REGION"
-export TF_DATA_DIR=".terraform_${ORGANIZATION}_${ENVIRONMENT}_${REGION}"
 echo "Updated env var ENVIRONMENT=$ENVIRONMENT"
+
+export AWS_PROFILE="${ORGANIZATION}-${LAYER}-${ENVIRONMENT}"
 echo "Updated env var AWS_PROFILE=$AWS_PROFILE"
+
+export AWS_REGION="$REGION"
 echo "Updated env var AWS_REGION=$AWS_REGION"
-echo "Updated env var TF_DATA_DIR=$TF_DATA_DIR"
+
+echo TERRAFORM_CLOUD is $TERRAFORM_CLOUD 
+if [ "$TERRAFORM_CLOUD" != "True" ]; then
+  export TF_DATA_DIR=".terraform_${ORGANIZATION}_${ENVIRONMENT}_${REGION}"
+  echo "Updated env var TF_DATA_DIR=$TF_DATA_DIR"
+else
+  export TF_WORKSPACE=${LAYER}-${ENVIRONMENT}
+  echo "Updated env var TF_WORKSPACE=$TF_WORKSPACE"
+fi
+
 
 # Set kubectl context assuming there is one cluster per environment and region
 if kubectl config use-context "${ORGANIZATION}-${LAYER}-${ENVIRONMENT}-${REGION}"; then

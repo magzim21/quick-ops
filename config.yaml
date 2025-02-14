@@ -1,6 +1,7 @@
 # default_org: codelawcorp
 orgs:
   codelawcorp:
+    terraform_cloud: true
     layers:
         org:
           tf_directory: "~/Desktop/github/codelawcorp/terraform-org/terraform"
@@ -36,6 +37,7 @@ orgs:
               regions:
                 - ca-central-1
   iecbc-it:
+    terraform_cloud: true
     layers:
         org:
           tf_directory: "~/Desktop/github/iecbc-it/terraform-org/terraform"
