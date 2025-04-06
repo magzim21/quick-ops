@@ -77,6 +77,7 @@ if [ "$TERRAFORM_CLOUD" != "True" ]; then
   export TF_DATA_DIR=".terraform_${ORGANIZATION}_${ENVIRONMENT}_${REGION}"
   echo "Updated env var TF_DATA_DIR=$TF_DATA_DIR"
 else
+  echo "Terraform workspace expected to be set in the backend configuration block"
   export TF_WORKSPACE=${LAYER}-${ENVIRONMENT}
   echo "Updated env var TF_WORKSPACE=$TF_WORKSPACE"
 fi

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import string
 import iterm2
 import yaml
 import fire
@@ -13,17 +14,15 @@ current_directory = os.path.dirname(os.path.realpath(__file__))
 logger.debug(f"Script's directory: {current_directory}")
 
 
-async def main(connection):
-    parser = argparse.ArgumentParser(description="Quick Ops Script")
-    parser.add_argument("--config", type=str, default=f"{current_directory}/config.yaml", help="ath to the configuration file")
-    parser.add_argument("--org", type=str, default="codelawcorp", help="The organization to use")
-    args = parser.parse_args()
+ORG=""
+CONFIG_PATH=""
 
-    logger.debug(f"Org: {args.org}")
-    logger.debug(f"Config: {args.config}")
+
+
+async def main(connection):
 
     # Load configuration from config.yaml
-    with open(args.config, "r") as file:
+    with open(CONFIG_PATH, "r") as file:
         config = yaml.safe_load(file)
     app = await iterm2.async_get_app(connection)
     window = app.current_window
@@ -36,18 +35,18 @@ async def main(connection):
     tab = await window.async_create_tab()
     session = tab.current_session
 
-    is_terraform_cloud = config["orgs"][args.org]["terraform_cloud"] or ""
+    is_terraform_cloud = config["orgs"][ORG]["terraform_cloud"] or ""
 
-    logger.debug(config["orgs"][args.org]["layers"])
+    logger.debug(config["orgs"][ORG]["layers"])
     panes = []
-    for layer_name, layer_value in config["orgs"][args.org]["layers"].items():
+    for layer_name, layer_value in config["orgs"][ORG]["layers"].items():
         logger.debug(f"Layer: {layer_name}")
         directory = layer_value["tf_directory"]
         for environment_name, environment_value in layer_value["environments"].items():
             logger.debug(f"Environment: {environment_name}")
             for region in environment_value["regions"]:
                 logger.debug(f"Region: {region}")
-                safe_ops_args = f"{args.org} {layer_name} {environment_name} {region} {directory} {is_terraform_cloud}"
+                safe_ops_args = f"{ORG} {layer_name} {environment_name} {region} {directory} {is_terraform_cloud}"
                 logger.info(f"Safe Ops Args: {safe_ops_args}")
                 panes.append(safe_ops_args)
 
@@ -80,4 +79,13 @@ async def main(connection):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Quick Ops Script")
+    parser.add_argument("--config", type=str, default=f"{current_directory}/config.yaml", help="ath to the configuration file")
+    parser.add_argument("--org", type=str, default="codelawcorp", help="The organization to use")
+    args = parser.parse_args()
+
+    logger.debug(f"Org: {args.org}")
+    logger.debug(f"Config: {args.config}")
+    ORG=args.org
+    CONFIG_PATH=args.config
     iterm2.run_until_complete(main)
