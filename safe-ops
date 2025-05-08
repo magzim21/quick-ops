@@ -83,9 +83,5 @@ else
 fi
 
 
-# Set kubectl context assuming there is one cluster per environment and region
-if kubectl config use-context "${ORGANIZATION}-${LAYER}-${ENVIRONMENT}-${REGION}"; then
-  echo "Kubectl context set to ${ORGANIZATION}-${LAYER}-${ENVIRONMENT}-${REGION}"
-else
-  echo "${ORGANIZATION}-${LAYER}-${ENVIRONMENT}-${REGION} context not found"
-fi
+export KUBECONFIG="${HOME}/.kube/${ORGANIZATION}-${LAYER}-${ENVIRONMENT}-${REGION}"
+echo "Updated env var KUBECONFIG=$KUBECONFIG"
