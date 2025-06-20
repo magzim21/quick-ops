@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Ensure the script is called with two arguments
-if [ "$#" -le 5 ]; then
+if [ "$#" -lt 4 ]; then
   echo "Usage: $0 <organization> <layer> <environment> <region> <tf TF_directory> <is Terraform cloud>"
   exit 1
 fi
