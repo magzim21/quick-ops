@@ -1,7 +1,7 @@
 # default_org: codelawcorp
 orgs:
   codelawcorp:
-    terraform_cloud: true
+    terraform_cloud: false
     layers:
         org:
           tf_directory: "~/Desktop/github/codelawcorp/terraform-org/terraform"
