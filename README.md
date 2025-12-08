@@ -31,8 +31,9 @@ Creates iterm2 tabs per environment and region.
 
 Press `command+option+I` to toggle broadcast input. Run commands without hardcoded env and region:
 ```
-terraform init  -backend-config environments/${ENVIRONMENT}/${AWS_REGION}/backend.tfvars
-terraform apply -var-file environments/${ENVIRONMENT}/${AWS_REGION}/variables.tfvars
+alias ti="terraform init -reconfigure -backend-config environments/${ENVIRONMENT}/${AWS_REGION}/backend.tfvars"
+alias ta="terraform apply -var-file environments/${ENVIRONMENT}/${AWS_REGION}/variables.tfvars"
+alias td="terraform destroy -var-file environments/${ENVIRONMENT}/${AWS_REGION}/variables.tfvars"
 ```
 This works perfectly well because `./safe-ops` does `export TF_DATA_DIR=".terraform_${ENVIRONMENT}_${REGION}"`
 
