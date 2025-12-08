@@ -37,7 +37,7 @@ orgs:
               regions:
                 - ca-central-1
   iecbc-it:
-    terraform_cloud: true
+    terraform_cloud: false
     layers:
         org:
           tf_directory: "~/Desktop/github/iecbc-it/terraform-org/terraform"
@@ -51,9 +51,9 @@ orgs:
             prod:
               regions:
                 - ca-central-1
-            # tests:
-            #   regions:
-            #     - ca-central-1
+            tests:
+              regions:
+                - ca-central-1
             # dev:
             #   regions:
             #     - ca-central-1
@@ -63,9 +63,9 @@ orgs:
             prod:
               regions:
                 - ca-central-1
-            # tests:
-            #   regions:
-            #     - ca-central-1
+            tests:
+              regions:
+                - ca-central-1
             # stg:
             #   regions:
             #     - ca-central-1
